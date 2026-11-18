@@ -1,0 +1,7 @@
+{
+	"luci-app-technitium": {
+		"description": "Access the Technitium DNS service",
+		"read": {"ubus": {"luci.technitium": ["status"]}},
+		"write": {"ubus": {"luci.technitium": ["control"]}}
+	}
+}

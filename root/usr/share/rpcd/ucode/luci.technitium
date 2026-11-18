@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+'use strict';
+
+import { connect } from 'ubus';
+
+const service = '/etc/init.d/technitium';
+const actions = ['start', 'stop', 'restart', 'enable', 'disable'];
+
+return {
+	'luci.technitium': {
+		status: {
+			call: function() {
+				const bus = connect();
+				const services = bus?.call('service', 'list', { name: 'technitium' });
+				const instances = services?.technitium?.instances || {};
+				let running = false;
+				for (let name in instances)
+					if (instances[name].running === true)
+						running = true;
+
+				return {
+					running,
+					enabled: system(service + ' enabled >/dev/null 2>&1') === 0,
+					console_port: 5380,
+					dns_port: 53
+				};
+			}
+		},
+		control: {
+			args: { action: '' },
+			call: function(request) {
+				const action = request.args.action;
+				if (index(actions, action) < 0)
+					return { success: false };
+
+				return { success: system(service + ' ' + action + ' >/dev/null 2>&1') === 0 };
+			}
+		}
+	}
+};

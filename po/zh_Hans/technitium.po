@@ -1,0 +1,29 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\nLanguage: zh_Hans\n"
+
+msgid "Unable to read the Technitium DNS service state."
+msgstr "无法读取 Technitium DNS 的服务状态。"
+
+msgid "Stopping Technitium interrupts DNS for clients using this router. Continue?"
+msgstr "停止 Technitium 会中断使用本路由器的客户端 DNS。是否继续？"
+
+msgid "The service action failed. Check the system log."
+msgstr "服务操作失败，请查看系统日志。"
+
+msgid "Disable on boot"
+msgstr "禁用开机启动"
+
+msgid "Enable on boot"
+msgstr "启用开机启动"
+
+msgid "Start on boot"
+msgstr "开机启动"
+
+msgid "DNS port"
+msgstr "DNS 端口"
+
+msgid "Open Technitium Console"
+msgstr "打开 Technitium 控制台"
+
+msgid "Start the service to open its console."
+msgstr "启动服务后可以打开控制台。"
