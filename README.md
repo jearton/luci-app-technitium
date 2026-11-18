@@ -17,7 +17,13 @@ scp -O luci-app-technitium-1.0.2-r1.apk root@192.168.1.1:/tmp/
 ssh root@192.168.1.1
 ```
 
-Run the following commands on the router. If the router already has the native `technitium` and `rpcd-mod-ucode` packages, this update works offline. The install command skips repository configuration for this invocation and permits the verified standalone APK. [APK options](https://github.com/alpinelinux/apk-tools/blob/v3.0.5/doc/apk.8.scd)
+On the router, check that the uploaded file exists at the exact path. If it is missing, repeat the copy from your computer and check the destination address. The router clears `/tmp` on reboot.
+
+```sh
+ls -l /tmp/luci-app-technitium-1.0.2-r1.apk
+```
+
+If the router already has the native `technitium` and `rpcd-mod-ucode` packages, this update works offline. The install command skips repository configuration for this invocation and permits the verified standalone APK. [APK options](https://github.com/alpinelinux/apk-tools/blob/v3.0.5/doc/apk.8.scd)
 
 ```sh
 apk --no-network --repositories-file /dev/null --allow-untrusted add /tmp/luci-app-technitium-1.0.2-r1.apk
