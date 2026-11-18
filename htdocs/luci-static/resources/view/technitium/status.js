@@ -54,6 +54,15 @@ return view.extend({
 		consoleUrl.search = '';
 		consoleUrl.hash = '';
 
+		if (state.running)
+			controls.prepend(E('a', {
+				class: 'btn cbi-button cbi-button-action',
+				style: 'margin-inline-end: auto',
+				href: consoleUrl.toString(),
+				target: '_blank',
+				rel: 'noopener'
+			}, _('Open Technitium Console')));
+
 		const rows = [
 			[_('Service'), state.running ? _('Running') : _('Stopped')],
 			[_('Start on boot'), state.enabled ? _('Enabled') : _('Disabled')],
@@ -68,12 +77,7 @@ return view.extend({
 					E('div', { class: 'td' }, value)
 				]))),
 			controls,
-			state.running ? E('a', {
-				class: 'btn cbi-button cbi-button-action',
-				href: consoleUrl.toString(),
-				target: '_blank',
-				rel: 'noopener'
-			}, _('Open Technitium Console')) : E('p', {}, _('Start the service to open its console.'))
+			state.running ? null : E('p', {}, _('Start the service to open its console.'))
 		]);
 	},
 
