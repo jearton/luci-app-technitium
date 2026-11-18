@@ -67,6 +67,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	rm -f /tmp/technitium-upgrade.running
 	if /etc/init.d/technitium running >/dev/null 2>&1; then
 		(umask 077; touch /tmp/technitium-upgrade.running)
+		/etc/init.d/technitium stop || exit 1
 	fi
 fi
 exit 0
@@ -105,7 +106,8 @@ define Build/Compile
 endef
 
 define Package/technitium/install
-	$(INSTALL_DIR) $(1)/usr/lib/technitium $(1)/etc/init.d $(1)/lib/upgrade/keep.d
+	$(INSTALL_DIR) $(1)/usr/lib/technitium $(1)/etc/init.d $(1)/etc/technitium $(1)/lib/upgrade/keep.d
+	chmod 0700 $(1)/etc/technitium
 	$(CP) $(PKG_BUILD_DIR)/server $(PKG_BUILD_DIR)/dotnet $(PKG_BUILD_DIR)/console $(1)/usr/lib/technitium/
 	# Provide the Alpine libc SONAME within the runtime using OpenWrt's musl.
 	ln -s /lib/libc.so $(1)/usr/lib/technitium/dotnet/libc.musl-x86_64.so.1

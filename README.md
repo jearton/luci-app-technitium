@@ -1,88 +1,76 @@
-# Technitium DNS for OpenWrt
+# OpenWrt Technitium DNS
 
-Native Technitium DNS Server, Technitium Console and a LuCI service manager for OpenWrt. This repository builds and publishes the complete installation.
+**简体中文** | [English](README.en.md)
 
-| Package | Contents |
+为 OpenWrt 提供原生 Technitium DNS Server、Technitium Console 和 LuCI 服务管理。本项目独立构建和发布完整安装所需的软件包。
+
+| 软件包 | 内容 |
 | --- | --- |
-| `technitium` | [Technitium DNS Server](https://github.com/TechnitiumSoftware/DnsServer) 15.6.2, [Technitium Console](https://github.com/byGarcia/technitium-console) 1.4.2, ASP.NET Core 10.0.15 musl runtime, procd service and backup paths |
-| `luci-app-technitium` | LuCI status, start/stop/restart, boot settings and console entry |
-| `luci-i18n-technitium-zh-cn` | Simplified Chinese translation for the LuCI app |
+| `technitium` | [Technitium DNS Server](https://github.com/TechnitiumSoftware/DnsServer) 15.6.2、[Technitium Console](https://github.com/byGarcia/technitium-console) 1.4.2、ASP.NET Core 10.0.15 musl 运行时、procd 服务和配置备份路径 |
+| `luci-app-technitium` | LuCI 状态、启动、停止、重启、开机启动设置和控制台入口 |
+| `luci-i18n-technitium-zh-cn` | LuCI 界面的简体中文翻译 |
 
-The current native package supports **OpenWrt 25.12 on x86/64**. The LuCI package is architecture independent. Other CPU architectures require a matching native runtime package.
+当前原生服务包支持 **OpenWrt 25.12 x86/64**。LuCI 包与 CPU 架构无关，其他架构需要匹配的原生运行时包。
 
-## Installation and service defaults
+## 安装与默认状态
 
-Download the server and LuCI APKs together from [Releases](https://github.com/jearton/luci-app-technitium/releases), plus the translation APK if needed. Verify the files against the accompanying `SHA256SUMS`. Upload them to the router, using its actual LAN address.
+从 [Releases](https://github.com/jearton/luci-app-technitium/releases) 同时下载后台包和 LuCI 主包，需要中文时再下载翻译包。按随附的 `SHA256SUMS` 校验下载文件。将 APK 上传到路由器，命令中的地址使用实际 LAN 地址。
 
 ```sh
 scp -O technitium-15.6.2-r2.apk luci-app-technitium-1.1.0-r1.apk root@192.168.1.1:/tmp/
 ssh root@192.168.1.1
 ```
 
-On the router, install both APKs. APK resolves the runtime library dependencies using the router's configured repositories.
+在路由器终端安装两个 APK。APK 会通过路由器已配置的软件源解析并获取运行时依赖。
 
 ```sh
 apk add --allow-untrusted /tmp/technitium-15.6.2-r2.apk /tmp/luci-app-technitium-1.1.0-r1.apk
 ```
 
-When the required system libraries are already installed, use this offline command.
+系统依赖已经安装时，可以离线执行以下命令。
 
 ```sh
 apk --no-network --repositories-file /dev/null --allow-untrusted add /tmp/technitium-15.6.2-r2.apk /tmp/luci-app-technitium-1.1.0-r1.apk
 apk --no-network --repositories-file /dev/null list -I technitium luci-app-technitium
 ```
 
-The required system packages are `libstdcpp6`, `libgcc1`, `libopenssl3`, `libatomic1`, `zlib`, `ca-bundle` and `rpcd-mod-ucode`. LuCI must already be installed. Standalone APKs use `--allow-untrusted` for that invocation. [OpenWrt APK documentation](https://openwrt.org/docs/guide-user/additional-software/apk)
+依赖包包括 `libstdcpp6`、`libgcc1`、`libopenssl3`、`libatomic1`、`zlib`、`ca-bundle` 和 `rpcd-mod-ucode`，同时需要已安装 LuCI。`--allow-untrusted` 用于本次安装已校验的独立 APK。[OpenWrt APK 文档](https://openwrt.org/docs/guide-user/additional-software/apk)
 
-A **fresh installation leaves Technitium stopped and disabled on boot**. Open **Services → Technitium DNS** to start it and choose whether to enable it on boot. Before first startup, configure the existing DNS resolver so port 53 is available. The initial startup checks for an existing DNS listener.
+**首次独立安装后，Technitium 默认停止，开机启动默认关闭。** 进入「服务 → Technitium DNS」启动服务，并按需开启开机启动。首次启动前，请配置现有 DNS 服务，释放 53 端口。首次启动会检查 DNS 端口占用。
 
-Package upgrades retain the existing service's boot and running states and preserve `/etc/technitium/`. Firmware builders can explicitly enable the service after installing the packages and configuring their DNS integration.
+软件包升级保留服务原有的运行状态、开机启动设置和 `/etc/technitium/` 数据。固件构建者可以在安装软件包并完成 DNS 集成后，显式开启服务。
 
-The generic packages leave DHCP, firewall, OpenClash, other DNS services and local forwarding zones under the router administrator's control. Optional Advanced Forwarding 5.2 is bundled as an archive for installation from the Technitium console.
+通用包由管理员配置 DHCP、防火墙、OpenClash、其他 DNS 服务和内网域名转发。软件包附带 Advanced Forwarding 5.2 安装归档，可在 Technitium 控制台安装。
 
-## First console login
+## 首次登录控制台
 
-Open **Services → Technitium DNS**, confirm the service is running and select **Open Technitium Console**. The current console entry uses HTTP port `5380` at the same hostname as LuCI. The initial DNS port is `53`. Port changes in the console require updating the current LuCI integration.
+进入「服务 → Technitium DNS」，确认服务已运行，点击「打开 Technitium 控制台」。当前入口使用与 LuCI 相同的主机地址和 HTTP 端口 `5380`，初始 DNS 端口为 `53`。在控制台修改端口后，需要同步调整当前 LuCI 集成的入口。
 
-The username is `admin`. Read the randomly generated initial password on the router through the LuCI terminal or your SSH management connection.
-
-```sh
-cat /etc/technitium/setup-password
-```
-
-Sign in and change the password in the console. This file retains the initial password after a password change. After confirming the new password works, remove the initial password file from the router.
-
-The console uses its own authentication. LuCI RPC permissions control service operations.
-
-## 首次安装和登录
-
-从 Release 同时下载 `technitium` 后台包和 `luci-app-technitium` 主包，需要中文时再安装 `luci-i18n-technitium-zh-cn` 翻译包。翻译包用于界面翻译，主包提供界面功能。
-
-独立安装后，服务默认停止，开机启动默认关闭。在 **服务 → Technitium DNS** 检查端口并启动服务后，点击 **打开 Technitium 控制台**。首次启动会检查 53 端口占用，需要先配置现有 DNS 服务。
-
-用户名为 `admin`，在路由器终端执行以下命令查看随机生成的初始密码。
+用户名是 `admin`。通过路由器的 LuCI 终端或 SSH 管理连接查看首次启动时随机生成的密码。
 
 ```sh
 cat /etc/technitium/setup-password
 ```
 
-登录后修改密码，确认新密码可以登录后删除初始密码文件。更新软件包会保留 DNS 数据、开机启动设置和服务运行状态。定制固件可以在完成 DNS 集成后显式设置默认开启。
+登录后在控制台修改密码。该文件保留初始密码，修改密码后仍会显示原值。确认新密码可以登录后，删除路由器上的初始密码文件。
 
-## Updating an existing installation
+控制台使用自己的登录认证。LuCI 的 RPC 权限控制服务管理操作。
 
-Upload the matching server and LuCI APKs, then use the installation command above. For the v1.1.0 release the LuCI app requires `technitium >= 15.6.2-r2`.
+## 更新已有安装
 
-Check that each file exists at the exact destination before installing. The router clears `/tmp` on reboot.
+上传匹配版本的后台包和 LuCI 主包，再执行上面的安装命令。v1.1.0 的 LuCI 主包依赖 `technitium >= 15.6.2-r2`。
+
+安装前确认文件存在于准确的目标路径。路由器重启会清空 `/tmp`。
 
 ```sh
 ls -l /tmp/technitium-15.6.2-r2.apk /tmp/luci-app-technitium-1.1.0-r1.apk
 ```
 
-Refresh the LuCI page after updating. An update to the backend restarts a previously running service and briefly interrupts its DNS clients. Back up `/etc/technitium/` before upgrading.
+更新后刷新 LuCI 页面。升级后台包会重启原先运行的服务，DNS 客户端会短时中断。升级前备份 `/etc/technitium/`。
 
-## Build and publish
+## 构建和发布
 
-This repository is an OpenWrt feed with two package directories, `technitium/` and `luci-app-technitium/`. Add it to `feeds.conf.default`, install the feed and select the LuCI app. Its package dependencies select the server.
+本仓库是 OpenWrt 软件源，包含 `technitium/` 和 `luci-app-technitium/` 两个软件包目录。将本项目添加到 `feeds.conf.default`，安装软件源并选中 LuCI 插件，依赖关系会同时选中后台服务。
 
 ```text
 src-git technitium https://github.com/jearton/luci-app-technitium.git
@@ -95,22 +83,22 @@ make menuconfig
 make package/technitium/compile package/luci-app-technitium/compile V=s
 ```
 
-Pin a tested tag or commit for firmware releases. DNS Server, Console and runtime archives have fixed versions and SHA-256 checks in `technitium/Makefile`.
+发布固件时固定已验收的 tag 或 commit。`technitium/Makefile` 固定 DNS Server、Console 和运行时的版本及 SHA-256。
 
-[Actions](https://github.com/jearton/luci-app-technitium/actions) builds all three APKs using the OpenWrt 25.12.6 SDK on Linux. An isolated IPv4-only x86 VM tests upgrading the previous bundled service, all four running/boot-state combinations, fresh offline installation, port conflicts, DNS records and console login. The regression test starts from a checksum-pinned prior firmware image. Package builds use this repository and the upstream OpenWrt SDK.
+[Actions](https://github.com/jearton/luci-app-technitium/actions) 在 Linux 上使用 OpenWrt 25.12.6 SDK 构建三个 APK。隔离的 IPv4 x86 虚拟机测试旧版服务升级、运行状态和开机启动的四种组合、首次离线安装、端口冲突、DNS 记录和控制台登录。回归测试从 SHA-256 固定的旧版固件启动，软件包构建使用本项目和上游 OpenWrt SDK。
 
-Version tags publish the three APKs, a local `packages.adb` index and checksums to [Releases](https://github.com/jearton/luci-app-technitium/releases) and [GHCR](https://github.com/jearton/luci-app-technitium/pkgs/container/luci-app-technitium), followed by download verification.
+版本 tag 将三个 APK、本地 `packages.adb` 索引和校验文件发布到 [Releases](https://github.com/jearton/luci-app-technitium/releases) 和 [GHCR](https://github.com/jearton/luci-app-technitium/pkgs/container/luci-app-technitium)，并重新下载验证。
 
-## Screenshots
+## 界面截图
 
-**Services → Technitium DNS**
+**服务 → Technitium DNS**
 
-LuCI v1.0.2 rendered in Chrome with the Argon theme and example service status.
+使用 LuCI v1.0.2、Argon 主题和示例服务状态在 Chrome 渲染。
 
-![Technitium DNS LuCI page with a compact console button on the left](docs/luci-technitium.png)
+![Technitium DNS 的 LuCI 管理页，左侧为按文字宽度显示的控制台按钮](docs/luci-technitium.png)
 
 **Technitium Console → Zones**
 
-Captured from Technitium Console 1.4.2 in the x86/64 OpenWrt lab.
+截图来自 x86/64 OpenWrt 实验环境中的 Technitium Console 1.4.2。
 
-![Technitium Console with the lab DNS zones](docs/technitium-console.png)
+![Technitium Console 的域名区域列表](docs/technitium-console.png)
