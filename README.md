@@ -6,6 +6,30 @@ This app expects the `technitium` OpenWrt package from [openwrt-pro](https://git
 
 LuCI's RPC ACL separates status and service control. The Technitium console has its own login. LuCI does not store its credentials.
 
+## First console login
+
+When using the native `technitium` package from openwrt-pro, open **Services → Technitium DNS**, confirm the service is running and select **Open Technitium Console**. The default console port is TCP `5380`.
+
+The username is `admin`. On the router, use the LuCI terminal or your SSH management connection to read the randomly generated initial password.
+
+```sh
+cat /etc/technitium/setup-password
+```
+
+Sign in with that password and change it in the console. This file contains the initial password and does not track later password changes. After confirming you can sign in with your new password, remove the initial password file from the router.
+
+## 首次登录控制台
+
+使用 openwrt-pro 的原生 `technitium` 软件包时，进入 **服务 → Technitium DNS**，确认服务已运行，点击 **打开 Technitium 控制台**。默认端口为 TCP `5380`。
+
+用户名为 `admin`。在 OpenWrt 的 LuCI 终端或 SSH 管理连接中执行以下命令，查看首次启动时随机生成的初始密码。
+
+```sh
+cat /etc/technitium/setup-password
+```
+
+登录后在控制台修改密码。该文件保存初始密码，修改密码后仍会显示原值。确认新密码可以登录后，删除初始密码文件。
+
 ## Update an existing installation
 
 On a router that already has the native `technitium` package, update the LuCI plugin with the `luci-app-technitium-*.apk` file from [Releases](https://github.com/jearton/luci-app-technitium/releases). Verify the download against the accompanying `SHA256SUMS`. The existing Chinese translation package can be kept for the v1.0.2 layout fix.
