@@ -80,6 +80,9 @@ return view.extend({
 		]);
 		if (!state.running)
 			content.append(E('p', {}, _('Start the service to open its console.')));
+		if (state.port_conflict)
+			content.append(E('p', { class: 'alert-message warning' },
+				_('DNS port 53 is in use. Configure the existing DNS service before starting Technitium.')));
 
 		return content;
 	},

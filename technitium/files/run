@@ -1,0 +1,29 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+set -eu
+umask 077
+
+base=/usr/lib/technitium
+state=/etc/technitium
+api_url=http://127.0.0.1:5380/api
+password_file="$state/setup-password"
+mkdir -p "$state/data"
+chmod 700 "$state" "$state/data"
+
+if [ ! -s "$state/data/auth.config" ] && [ ! -s "$password_file" ]; then
+	head -c 24 /dev/urandom | hexdump -v -e '1/1 "%02x"' > "$password_file"
+	test "$(wc -c < "$password_file")" -eq 48
+fi
+
+export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+export LD_LIBRARY_PATH="$base/dotnet"
+export DNS_SERVER_ADMIN_PASSWORD_FILE="$password_file"
+export DNS_SERVER_WEB_SERVICE_LOCAL_ADDRESSES=0.0.0.0
+export DNS_SERVER_WEB_SERVICE_WWW_FOLDER_PATH="$base/console"
+export DNS_SERVER_PREFER_IPV6=false
+export DNS_SERVER_RECURSION=AllowOnlyForPrivateNetworks
+export DNS_SERVER_LOG_FOLDER_PATH=/tmp/technitium-logs
+export DNS_SERVER_STATS_MAX_STAT_FILE_DAYS=30
+
+cd "$base/server"
+exec "$base/dotnet/dotnet" "$base/server/DnsServerApp.dll" "$state/data"

@@ -1,71 +1,105 @@
-# LuCI app for Technitium DNS
+# Technitium DNS for OpenWrt
 
-Open **Services → Technitium DNS** to check the native service, manage startup and open the Technitium web console. Account, zone and DNS settings are managed in the Technitium console.
+Native Technitium DNS Server, Technitium Console and a LuCI service manager for OpenWrt. This repository builds and publishes the complete installation.
 
-The plugin uses OpenWrt's LuCI, rpcd and procd interfaces. Build it using the standard LuCI feed alongside a compatible native `technitium` package.
+| Package | Contents |
+| --- | --- |
+| `technitium` | [Technitium DNS Server](https://github.com/TechnitiumSoftware/DnsServer) 15.6.2, [Technitium Console](https://github.com/byGarcia/technitium-console) 1.4.2, ASP.NET Core 10.0.15 musl runtime, procd service and backup paths |
+| `luci-app-technitium` | LuCI status, start/stop/restart, boot settings and console entry |
+| `luci-i18n-technitium-zh-cn` | Simplified Chinese translation for the LuCI app |
 
-LuCI's RPC ACL separates status and service control. The Technitium console has its own login. LuCI does not store its credentials.
+The current native package supports **OpenWrt 25.12 on x86/64**. The LuCI package is architecture independent. Other CPU architectures require a matching native runtime package.
 
-## Requirements and compatibility
+## Installation and service defaults
 
-- OpenWrt 25.12 with LuCI and `rpcd-mod-ucode`. Published packages use the OpenWrt APK format.
-- A native package named `technitium`, version `15.6.2-r1` or later, providing `/etc/init.d/technitium` and registering the service with procd as `technitium`.
-- The service script supports `start`, `stop`, `restart`, `enable`, `disable` and `enabled`.
-- The current plugin reports DNS port `53` and opens the console on HTTP port `5380` at the same hostname as LuCI. Deployments using different ports require an integration change.
-
-The LuCI package is architecture independent. The DNS server and .NET runtime need builds for the router's architecture. The verified installation uses x86/64, OpenWrt 25.12 and Argon.
-
-One compatible native package is maintained in the [openwrt-pro package sources](https://github.com/jearton/openwrt-pro/tree/main/sources/full/package/custom/technitium). Its service integration and initial-password behavior are described below. Other firmware builds can provide the same interfaces.
-
-## First console login
-
-Open **Services → Technitium DNS**, confirm the service is running and select **Open Technitium Console**. Use the account provisioned by your DNS server installation.
-
-With the compatible native package linked above, the username is `admin` and the server generates a random initial password on first startup. Read it through the LuCI terminal or your SSH management connection on the router.
+Download the server and LuCI APKs together from [Releases](https://github.com/jearton/luci-app-technitium/releases), plus the translation APK if needed. Verify the files against the accompanying `SHA256SUMS`. Upload them to the router, using its actual LAN address.
 
 ```sh
-cat /etc/technitium/setup-password
-```
-
-Sign in with that password and change it in the console. This file contains the initial password and does not track later password changes. After confirming you can sign in with your new password, remove the initial password file from the router.
-
-## 首次登录控制台
-
-进入 **服务 → Technitium DNS**，确认服务已运行，点击 **打开 Technitium 控制台**，使用 DNS 服务安装时配置的账号登录。当前插件使用 HTTP 端口 `5380`。
-
-使用上文链接的原生服务包时，用户名为 `admin`，初始密码由服务首次启动时随机生成。在 OpenWrt 的 LuCI 终端或 SSH 管理连接中执行以下命令查看。其他服务包的初始账号和密码以对应安装说明为准。
-
-```sh
-cat /etc/technitium/setup-password
-```
-
-登录后在控制台修改密码。该文件保存初始密码，修改密码后仍会显示原值。确认新密码可以登录后，删除初始密码文件。
-
-## Update an existing installation
-
-On a router that already has the native `technitium` package, update the LuCI plugin with the `luci-app-technitium-*.apk` file from [Releases](https://github.com/jearton/luci-app-technitium/releases). Verify the download against the accompanying `SHA256SUMS`. The existing Chinese translation package can be kept for the v1.0.2 layout fix.
-
-Copy the verified APK from your computer. This example uses the default LAN address and the v1.0.2 filename.
-
-```sh
-scp -O luci-app-technitium-1.0.2-r1.apk root@192.168.1.1:/tmp/
+scp -O technitium-15.6.2-r2.apk luci-app-technitium-1.1.0-r1.apk root@192.168.1.1:/tmp/
 ssh root@192.168.1.1
 ```
 
-On the router, check that the uploaded file exists at the exact path. If it is missing, repeat the copy from your computer and check the destination address. The router clears `/tmp` on reboot.
+On the router, install both APKs. APK resolves the runtime library dependencies using the router's configured repositories.
 
 ```sh
-ls -l /tmp/luci-app-technitium-1.0.2-r1.apk
+apk add --allow-untrusted /tmp/technitium-15.6.2-r2.apk /tmp/luci-app-technitium-1.1.0-r1.apk
 ```
 
-If the router already has the native `technitium` and `rpcd-mod-ucode` packages, this update works offline. The install command skips repository configuration for this invocation and permits the verified standalone APK. [APK options](https://github.com/alpinelinux/apk-tools/blob/v3.0.5/doc/apk.8.scd)
+When the required system libraries are already installed, use this offline command.
 
 ```sh
-apk --no-network --repositories-file /dev/null --allow-untrusted add /tmp/luci-app-technitium-1.0.2-r1.apk
-apk --no-network --repositories-file /dev/null list -I luci-app-technitium
+apk --no-network --repositories-file /dev/null --allow-untrusted add /tmp/technitium-15.6.2-r2.apk /tmp/luci-app-technitium-1.1.0-r1.apk
+apk --no-network --repositories-file /dev/null list -I technitium luci-app-technitium
 ```
 
-Refresh **Services → Technitium DNS** in LuCI. The router can stay running during the update.
+The required system packages are `libstdcpp6`, `libgcc1`, `libopenssl3`, `libatomic1`, `zlib`, `ca-bundle` and `rpcd-mod-ucode`. LuCI must already be installed. Standalone APKs use `--allow-untrusted` for that invocation. [OpenWrt APK documentation](https://openwrt.org/docs/guide-user/additional-software/apk)
+
+A **fresh installation leaves Technitium stopped and disabled on boot**. Open **Services → Technitium DNS** to start it and choose whether to enable it on boot. Before first startup, configure the existing DNS resolver so port 53 is available. The initial startup checks for an existing DNS listener.
+
+Package upgrades retain the existing service's boot and running states and preserve `/etc/technitium/`. Firmware builders can explicitly enable the service after installing the packages and configuring their DNS integration.
+
+The generic packages leave DHCP, firewall, OpenClash, other DNS services and local forwarding zones under the router administrator's control. Optional Advanced Forwarding 5.2 is bundled as an archive for installation from the Technitium console.
+
+## First console login
+
+Open **Services → Technitium DNS**, confirm the service is running and select **Open Technitium Console**. The current console entry uses HTTP port `5380` at the same hostname as LuCI. The initial DNS port is `53`. Port changes in the console require updating the current LuCI integration.
+
+The username is `admin`. Read the randomly generated initial password on the router through the LuCI terminal or your SSH management connection.
+
+```sh
+cat /etc/technitium/setup-password
+```
+
+Sign in and change the password in the console. This file retains the initial password after a password change. After confirming the new password works, remove the initial password file from the router.
+
+The console uses its own authentication. LuCI RPC permissions control service operations.
+
+## 首次安装和登录
+
+从 Release 同时下载 `technitium` 后台包和 `luci-app-technitium` 主包，需要中文时再安装 `luci-i18n-technitium-zh-cn` 翻译包。翻译包用于界面翻译，主包提供界面功能。
+
+独立安装后，服务默认停止，开机启动默认关闭。在 **服务 → Technitium DNS** 检查端口并启动服务后，点击 **打开 Technitium 控制台**。首次启动会检查 53 端口占用，需要先配置现有 DNS 服务。
+
+用户名为 `admin`，在路由器终端执行以下命令查看随机生成的初始密码。
+
+```sh
+cat /etc/technitium/setup-password
+```
+
+登录后修改密码，确认新密码可以登录后删除初始密码文件。更新软件包会保留 DNS 数据、开机启动设置和服务运行状态。定制固件可以在完成 DNS 集成后显式设置默认开启。
+
+## Updating an existing installation
+
+Upload the matching server and LuCI APKs, then use the installation command above. For the v1.1.0 release the LuCI app requires `technitium >= 15.6.2-r2`.
+
+Check that each file exists at the exact destination before installing. The router clears `/tmp` on reboot.
+
+```sh
+ls -l /tmp/technitium-15.6.2-r2.apk /tmp/luci-app-technitium-1.1.0-r1.apk
+```
+
+Refresh the LuCI page after updating. An update to the backend restarts a previously running service and briefly interrupts its DNS clients. Back up `/etc/technitium/` before upgrading.
+
+## Build and publish
+
+This repository is an OpenWrt feed with two package directories, `technitium/` and `luci-app-technitium/`. Add it to `feeds.conf.default`, install the feed and select the LuCI app. Its package dependencies select the server.
+
+```text
+src-git technitium https://github.com/jearton/luci-app-technitium.git
+```
+
+```sh
+./scripts/feeds update technitium
+./scripts/feeds install -a -p technitium
+make menuconfig
+make package/technitium/compile package/luci-app-technitium/compile V=s
+```
+
+Pin a tested tag or commit for firmware releases. DNS Server, Console and runtime archives have fixed versions and SHA-256 checks in `technitium/Makefile`.
+
+[Actions](https://github.com/jearton/luci-app-technitium/actions) builds all three APKs using the OpenWrt 25.12.6 SDK on Linux. An isolated IPv4-only x86 VM tests upgrading the previous bundled service, all four running/boot-state combinations, fresh offline installation, port conflicts, DNS records and console login. The regression test starts from a checksum-pinned prior firmware image. Package builds use this repository and the upstream OpenWrt SDK.
+
+Version tags publish the three APKs, a local `packages.adb` index and checksums to [Releases](https://github.com/jearton/luci-app-technitium/releases) and [GHCR](https://github.com/jearton/luci-app-technitium/pkgs/container/luci-app-technitium), followed by download verification.
 
 ## Screenshots
 
@@ -80,7 +114,3 @@ LuCI v1.0.2 rendered in Chrome with the Argon theme and example service status.
 Captured from Technitium Console 1.4.2 in the x86/64 OpenWrt lab.
 
 ![Technitium Console with the lab DNS zones](docs/technitium-console.png)
-
-## Builds
-
-[Actions](https://github.com/jearton/luci-app-technitium/actions) builds the OpenWrt 25.12 APK and Simplified Chinese translation. A version tag publishes both APKs and their SHA-256 checksums to [Releases](https://github.com/jearton/luci-app-technitium/releases) and [GHCR](https://github.com/jearton/luci-app-technitium/pkgs/container/luci-app-technitium). Install the matching native `technitium` package as well.

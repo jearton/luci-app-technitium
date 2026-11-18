@@ -1,4 +1,4 @@
-name: Build and publish LuCI APK
+name: Build, test and publish Technitium packages
 
 on:
   push:
@@ -20,35 +20,43 @@ jobs:
           persist-credentials: false
       - name: Check source
         run: |
-          node --check htdocs/luci-static/resources/view/technitium/status.js
-          find root -name '*.json' -exec jq -e . {} \; >/dev/null
+          node --check luci-app-technitium/htdocs/luci-static/resources/view/technitium/status.js
+          find luci-app-technitium/root -name '*.json' -exec jq -e . {} \; >/dev/null
+          sh -n technitium/files/run technitium/files/technitium.init
+          python3 -m py_compile tests/check-install.py
       - name: Prepare the OpenWrt 25.12.6 SDK
         run: |
           sudo apt-get update -q
-          sudo apt-get install -qy build-essential flex bison gawk gettext libncurses-dev libssl-dev python3-setuptools rsync unzip zstd
+          sudo apt-get install -qy qemu-system-x86 ovmf dnsutils build-essential flex bison gawk gettext libncurses-dev libssl-dev python3-setuptools rsync unzip zstd
           archive=openwrt-sdk-25.12.6-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst
           curl -fLsS --retry 3 "https://downloads.openwrt.org/releases/25.12.6/targets/x86/64/$archive" -o "$RUNNER_TEMP/$archive"
           printf '%s  %s\n' 1864152619092e781fa36a401960c8e9ae42d6a364c44ee5f0b197ca5f3c0fcc "$RUNNER_TEMP/$archive" | sha256sum -c -
           mkdir -p "$RUNNER_TEMP/sdk"
           tar --zstd -xf "$RUNNER_TEMP/$archive" --strip-components=1 -C "$RUNNER_TEMP/sdk"
-      - name: Build and verify both APKs
+      - name: Build and verify the server, LuCI and translation APKs
         run: |
           sdk="$RUNNER_TEMP/sdk"
-          mkdir -p "$sdk/package/luci-app-technitium" "$RUNNER_TEMP/apks"
-          cp -a Makefile LICENSE htdocs po root "$sdk/package/luci-app-technitium/"
+          mkdir -p "$sdk/package/custom" "$RUNNER_TEMP/apks"
+          cp -a technitium luci-app-technitium "$sdk/package/custom/"
+          cp LICENSE "$sdk/package/custom/luci-app-technitium/"
           cd "$sdk"
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-          printf '%s\n' CONFIG_PACKAGE_luci-app-technitium=m CONFIG_LUCI_LANG_zh_Hans=y > .config
+          printf '%s\n' CONFIG_PACKAGE_technitium=m CONFIG_PACKAGE_luci-app-technitium=m CONFIG_LUCI_LANG_zh_Hans=y > .config
           make defconfig
           grep -Fx CONFIG_PACKAGE_luci-app-technitium=m .config
-          make -j"$(nproc)" package/luci-app-technitium/compile V=s
-          find bin/packages -type f \( -name 'luci-app-technitium-*.apk' -o -name 'luci-i18n-technitium-zh-cn-*.apk' \) \
+          make -j"$(nproc)" package/technitium/compile package/luci-app-technitium/compile V=s
+          find bin/packages -type f \( -name 'technitium-*.apk' -o -name 'luci-app-technitium-*.apk' -o -name 'luci-i18n-technitium-zh-cn-*.apk' \) \
             -exec cp {} "$RUNNER_TEMP/apks/" \;
           cd "$RUNNER_TEMP/apks"
-          test "$(find . -name '*.apk' | wc -l)" -eq 2
+          test "$(find . -name '*.apk' | wc -l)" -eq 3
           "$sdk/staging_dir/host/bin/apk" adbdump luci-app-technitium-*.apk | grep -w technitium
-          sha256sum ./*.apk > SHA256SUMS
+          "$sdk/staging_dir/host/bin/apk" adbdump technitium-*.apk | grep -F '/usr/lib/technitium' || \
+            "$sdk/staging_dir/host/bin/apk" adbdump technitium-*.apk | grep -F DnsServerApp.dll
+          "$sdk/staging_dir/host/bin/apk" mkndx --allow-untrusted --output packages.adb ./*.apk
+          sha256sum ./*.apk packages.adb > SHA256SUMS
+      - name: Verify installation and upgrade in an isolated x86 VM
+        run: python3 tests/check-install.py "$RUNNER_TEMP/apks"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: openwrt-25.12-luci-app-technitium
@@ -83,13 +91,13 @@ jobs:
           oras push "$ref" --artifact-type application/vnd.openwrt.luci-app.v1 \
             --annotation "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
             --annotation "org.opencontainers.image.revision=$GITHUB_SHA" \
-            "${artifacts[@]}" SHA256SUMS:text/plain
+            "${artifacts[@]}" packages.adb:application/vnd.openwrt.apk-index SHA256SUMS:text/plain
           mkdir -p "$RUNNER_TEMP/package-check"
           oras pull "$ref" --output "$RUNNER_TEMP/package-check"
           (cd "$RUNNER_TEMP/package-check" && sha256sum -c SHA256SUMS)
           if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" ./*.apk SHA256SUMS --clobber --repo "$GITHUB_REPOSITORY"
+            gh release upload "$GITHUB_REF_NAME" ./*.apk packages.adb SHA256SUMS --clobber --repo "$GITHUB_REPOSITORY"
           else
-            gh release create "$GITHUB_REF_NAME" ./*.apk SHA256SUMS --verify-tag \
+            gh release create "$GITHUB_REF_NAME" ./*.apk packages.adb SHA256SUMS --verify-tag \
               --generate-notes --repo "$GITHUB_REPOSITORY"
           fi

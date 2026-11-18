@@ -20,6 +20,7 @@ return {
 
 				return {
 					running,
+					port_conflict: !running && system("test ! -s /etc/technitium/data/dns.config && netstat -ln 2>/dev/null | awk '$1 ~ /^(tcp|udp)/ && $4 ~ /:53$/ { found=1 } END { exit !found }'") === 0,
 					enabled: system(service + ' enabled >/dev/null 2>&1') === 0,
 					console_port: 5380,
 					dns_port: 53
@@ -33,7 +34,10 @@ return {
 				if (index(actions, action) < 0)
 					return { success: false };
 
-				return { success: system(service + ' ' + action + ' >/dev/null 2>&1') === 0 };
+				let success = system(service + ' ' + action + ' >/dev/null 2>&1') === 0;
+				if (success && (action === 'start' || action === 'restart'))
+					success = system('sleep 1; ' + service + ' running >/dev/null 2>&1') === 0;
+				return { success };
 			}
 		}
 	}

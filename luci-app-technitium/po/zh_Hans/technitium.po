@@ -27,3 +27,6 @@ msgstr "打开 Technitium 控制台"
 
 msgid "Start the service to open its console."
 msgstr "启动服务后可以打开控制台。"
+
+msgid "DNS port 53 is in use. Configure the existing DNS service before starting Technitium."
+msgstr "DNS 端口 53 已被占用，请先配置现有 DNS 服务，再启动 Technitium。"
