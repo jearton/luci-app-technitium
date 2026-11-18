@@ -2,15 +2,26 @@
 
 Open **Services → Technitium DNS** to check the native service, manage startup and open the Technitium web console. Account, zone and DNS settings are managed in the Technitium console.
 
-This app expects the `technitium` OpenWrt package from [openwrt-pro](https://github.com/jearton/openwrt-pro), including its `/etc/init.d/technitium` service. Build it using the standard LuCI feed alongside that package.
+The plugin uses OpenWrt's LuCI, rpcd and procd interfaces. Build it using the standard LuCI feed alongside a compatible native `technitium` package.
 
 LuCI's RPC ACL separates status and service control. The Technitium console has its own login. LuCI does not store its credentials.
 
+## Requirements and compatibility
+
+- OpenWrt 25.12 with LuCI and `rpcd-mod-ucode`. Published packages use the OpenWrt APK format.
+- A native package named `technitium`, version `15.6.2-r1` or later, providing `/etc/init.d/technitium` and registering the service with procd as `technitium`.
+- The service script supports `start`, `stop`, `restart`, `enable`, `disable` and `enabled`.
+- The current plugin reports DNS port `53` and opens the console on HTTP port `5380` at the same hostname as LuCI. Deployments using different ports require an integration change.
+
+The LuCI package is architecture independent. The DNS server and .NET runtime need builds for the router's architecture. The verified installation uses x86/64, OpenWrt 25.12 and Argon.
+
+One compatible native package is maintained in the [openwrt-pro package sources](https://github.com/jearton/openwrt-pro/tree/main/sources/full/package/custom/technitium). Its service integration and initial-password behavior are described below. Other firmware builds can provide the same interfaces.
+
 ## First console login
 
-When using the native `technitium` package from openwrt-pro, open **Services → Technitium DNS**, confirm the service is running and select **Open Technitium Console**. The default console port is TCP `5380`.
+Open **Services → Technitium DNS**, confirm the service is running and select **Open Technitium Console**. Use the account provisioned by your DNS server installation.
 
-The username is `admin`. On the router, use the LuCI terminal or your SSH management connection to read the randomly generated initial password.
+With the compatible native package linked above, the username is `admin` and the server generates a random initial password on first startup. Read it through the LuCI terminal or your SSH management connection on the router.
 
 ```sh
 cat /etc/technitium/setup-password
@@ -20,9 +31,9 @@ Sign in with that password and change it in the console. This file contains the 
 
 ## 首次登录控制台
 
-使用 openwrt-pro 的原生 `technitium` 软件包时，进入 **服务 → Technitium DNS**，确认服务已运行，点击 **打开 Technitium 控制台**。默认端口为 TCP `5380`。
+进入 **服务 → Technitium DNS**，确认服务已运行，点击 **打开 Technitium 控制台**，使用 DNS 服务安装时配置的账号登录。当前插件使用 HTTP 端口 `5380`。
 
-用户名为 `admin`。在 OpenWrt 的 LuCI 终端或 SSH 管理连接中执行以下命令，查看首次启动时随机生成的初始密码。
+使用上文链接的原生服务包时，用户名为 `admin`，初始密码由服务首次启动时随机生成。在 OpenWrt 的 LuCI 终端或 SSH 管理连接中执行以下命令查看。其他服务包的初始账号和密码以对应安装说明为准。
 
 ```sh
 cat /etc/technitium/setup-password
