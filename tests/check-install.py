@@ -127,17 +127,16 @@ curl -fsS -G -H "Authorization: Bearer $token" http://127.0.0.1:5380/api/zones/r
     --data-urlencode domain=node.package-ci.test --data-urlencode type=A \
     --data-urlencode ipAddress=192.0.2.42 --data-urlencode ttl=60 |
     jsonfilter -e '@.status' | grep -qx ok
-sha256sum /etc/technitium/data/auth.config > /tmp/auth.before
+cp /etc/technitium/setup-password /tmp/password.before
 cp /etc/config/dhcp /tmp/dhcp.before
 cp /etc/config/firewall /tmp/firewall.before
 """)
     guest.run(OFFLINE + " add /tmp/technitium-test/*.apk\n")
     guest.run("""
-/etc/init.d/rpcd restart
 until curl -fsS http://127.0.0.1:5380/ >/dev/null; do sleep 2; done
 /etc/init.d/technitium running
 /etc/init.d/technitium enabled
-sha256sum -c /tmp/auth.before
+cmp /etc/technitium/setup-password /tmp/password.before
 cmp /etc/config/dhcp /tmp/dhcp.before
 cmp /etc/config/firewall /tmp/firewall.before
 nslookup node.package-ci.test 127.0.0.1 | grep -F 192.0.2.42
@@ -145,6 +144,7 @@ test -f /usr/lib/technitium/console/index.html
 test -f /usr/lib/technitium/server/DnsServerApp.dll
 ubus call luci.technitium status | jsonfilter -e '@.running' | grep -qx true
 """)
+    guest.run(AUTH)
     print("Running legacy installation upgraded with DNS data, password and networking preserved.", flush=True)
 
     guest.run(AUTH + """
@@ -156,7 +156,7 @@ curl -fsS -G -H "Authorization: Bearer $token" http://127.0.0.1:5380/api/setting
     --data-urlencode dnsServerLocalEndPoints=0.0.0.0:53 |
     jsonfilter -e '@.status' | grep -qx ok
 until ubus call luci.technitium status | jsonfilter -e '@.dns_ports[*]' | grep -qx 53; do sleep 1; done
-sha256sum /etc/technitium/data/auth.config > /tmp/auth.before
+cp /etc/technitium/setup-password /tmp/password.before
 """)
     print("LuCI reports the actual DNS listener after changing 53 to 1053 and back.", flush=True)
 
@@ -172,8 +172,10 @@ sha256sum /etc/technitium/data/auth.config > /tmp/auth.before
         guest.run(
             ("" if running else "! ") + "/etc/init.d/technitium running\n" +
             ("" if enabled else "! ") + "/etc/init.d/technitium enabled\n" +
-            "sha256sum -c /tmp/auth.before\n"
+            "cmp /etc/technitium/setup-password /tmp/password.before\n"
         )
+        if running:
+            guest.run("until curl -fsS http://127.0.0.1:5380/ >/dev/null; do sleep 1; done\n" + AUTH)
         print(f"Reinstallation preserved running={running}, enabled={enabled}.", flush=True)
 
     guest.run("""

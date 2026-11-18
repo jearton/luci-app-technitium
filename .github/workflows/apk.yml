@@ -13,7 +13,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -42,9 +42,12 @@ jobs:
           cd "$sdk"
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-          printf '%s\n' CONFIG_PACKAGE_technitium=m CONFIG_PACKAGE_luci-app-technitium=m CONFIG_LUCI_LANG_zh_Hans=y > .config
+          printf '%s\n' '# CONFIG_ALL is not set' '# CONFIG_ALL_NONSHARED is not set' '# CONFIG_ALL_KMODS is not set' \
+            CONFIG_PACKAGE_technitium=m CONFIG_PACKAGE_luci-app-technitium=m CONFIG_LUCI_LANG_zh_Hans=y > .config
           make defconfig
           grep -Fx CONFIG_PACKAGE_luci-app-technitium=m .config
+          grep -Fx '# CONFIG_ALL is not set' .config
+          grep -Fx '# CONFIG_ALL_KMODS is not set' .config
           make -j"$(nproc)" package/technitium/compile package/luci-app-technitium/compile V=s
           find bin/packages -type f \( -name 'technitium-*.apk' -o -name 'luci-app-technitium-*.apk' -o -name 'luci-i18n-technitium-zh-cn-*.apk' \) \
             -exec cp {} "$RUNNER_TEMP/apks/" \;

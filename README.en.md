@@ -34,7 +34,7 @@ apk --no-network --repositories-file /dev/null --allow-untrusted add /tmp/techni
 apk --no-network --repositories-file /dev/null list -I technitium luci-app-technitium
 ```
 
-The required system packages are `libstdcpp6`, `libgcc1`, `libopenssl3`, `libatomic1`, `zlib`, `ca-bundle` , `rpcd-mod-ucode` and `ucode-mod-fs`. LuCI must already be installed. Standalone APKs use `--allow-untrusted` for that invocation. [OpenWrt APK documentation](https://openwrt.org/docs/guide-user/additional-software/apk)
+The required system packages are `libstdcpp6`, `libgcc1`, `libopenssl3`, `libatomic1`, `zlib`, `ca-bundle`, `rpcd-mod-ucode` and `ucode-mod-fs`. LuCI must already be installed. Standalone APKs use `--allow-untrusted` for that invocation. [OpenWrt APK documentation](https://openwrt.org/docs/guide-user/additional-software/apk)
 
 A **fresh installation leaves Technitium stopped and disabled on boot**. Open **Services → Technitium DNS** to start it and choose whether to enable it on boot. Before first startup, configure the existing DNS resolver so port 53 is available. The initial startup checks for an existing DNS listener.
 

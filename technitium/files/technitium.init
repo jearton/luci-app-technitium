@@ -8,7 +8,7 @@ USE_PROCD=1
 start_service() {
 	# Package installation must preserve the administrator's service state.
 	if [ "${pkgname:-}" = technitium ]; then
-		[ "${PKG_UPGRADE:-}" = 1 ] && [ -f /tmp/technitium-upgrade.running ] || return 0
+		[ "${PKG_UPGRADE:-}" = 1 ] && [ -f /var/run/technitium-upgrade.running ] || return 0
 	fi
 	if [ ! -s /etc/technitium/data/dns.config ] &&
 		netstat -ln 2>/dev/null | awk '$1 ~ /^(tcp|udp)/ && $4 ~ /:53$/ { found=1 } END { exit !found }'; then

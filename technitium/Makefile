@@ -64,9 +64,8 @@ endef
 define Package/technitium/preinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	rm -f /tmp/technitium-upgrade.running
 	if /etc/init.d/technitium running >/dev/null 2>&1; then
-		(umask 077; touch /tmp/technitium-upgrade.running)
+		(umask 077; touch /var/run/technitium-upgrade.running)
 		/etc/init.d/technitium stop || exit 1
 	fi
 fi
@@ -82,7 +81,7 @@ if [ "$${PKG_UPGRADE}" != 1 ]; then
 		/etc/init.d/technitium disable
 	fi
 fi
-[ -n "$${IPKG_INSTROOT}" ] || rm -f /tmp/technitium-upgrade.running
+[ -n "$${IPKG_INSTROOT}" ] || rm -f /var/run/technitium-upgrade.running
 exit 0
 endef
 

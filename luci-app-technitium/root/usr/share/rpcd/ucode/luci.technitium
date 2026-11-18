@@ -7,6 +7,8 @@ import { lsdir, readfile, readlink } from 'fs';
 const service = '/etc/init.d/technitium';
 const actions = ['start', 'stop', 'restart', 'enable', 'disable'];
 
+// Match the service's TCP/UDP listener pairs by socket inode to report its
+// active DNS ports.
 function dns_ports(instances) {
 	const sockets = {};
 	for (let name in instances) {
