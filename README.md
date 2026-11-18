@@ -5,3 +5,7 @@ Open **Services → Technitium DNS** to check the native service, manage startup
 This app expects the `technitium` OpenWrt package from [openwrt-pro](https://github.com/jearton/openwrt-pro), including its `/etc/init.d/technitium` service. Build it using the standard LuCI feed alongside that package.
 
 LuCI's RPC ACL separates status and service control. The Technitium console has its own login. LuCI does not store its credentials.
+
+## Builds
+
+[Actions](https://github.com/jearton/luci-app-technitium/actions) builds the OpenWrt 25.12 APK and Simplified Chinese translation. A version tag publishes both APKs and their SHA-256 checksums to [Releases](https://github.com/jearton/luci-app-technitium/releases) and [GHCR](https://github.com/jearton/luci-app-technitium/pkgs/container/luci-app-technitium). Install the matching native `technitium` package as well.
