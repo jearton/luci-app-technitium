@@ -3,7 +3,7 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI integration for Technitium DNS Server
-LUCI_DEPENDS:=+rpcd-mod-ucode +technitium
+LUCI_DEPENDS:=+rpcd-mod-ucode +ucode-mod-fs +technitium
 LUCI_EXTRA_DEPENDS:=technitium (>=15.6.2-r2)
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.1.0

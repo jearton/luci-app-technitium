@@ -2,9 +2,40 @@
 'use strict';
 
 import { connect } from 'ubus';
+import { lsdir, readfile, readlink } from 'fs';
 
 const service = '/etc/init.d/technitium';
 const actions = ['start', 'stop', 'restart', 'enable', 'disable'];
+
+function dns_ports(instances) {
+	const sockets = {};
+	for (let name in instances) {
+		const pid = int(instances[name].pid);
+		if (!instances[name].running || !(pid > 0))
+			continue;
+		const directory = '/proc/' + pid + '/fd/';
+		for (let fd in lsdir(directory) || []) {
+			const socket = match(readlink(directory + fd), /^socket:\[(\d+)\]$/);
+			if (socket)
+				sockets[socket[1]] = true;
+		}
+	}
+	const tcp = {};
+	const udp = {};
+	for (let protocol in ['tcp', 'tcp6', 'udp', 'udp6']) {
+		for (let line in split(readfile('/proc/net/' + protocol) || '', '\n')) {
+			const fields = split(trim(line), /\s+/);
+			if (!sockets[fields[9]])
+				continue;
+			const port = int(split(fields[1], ':')[1], 16);
+			if ((protocol === 'tcp' || protocol === 'tcp6') && fields[3] === '0A')
+				tcp[port] = true;
+			if ((protocol === 'udp' || protocol === 'udp6') && fields[3] === '07')
+				udp[port] = true;
+		}
+	}
+	return sort(map(filter(keys(udp), (port) => tcp[port]), (port) => int(port)), (a, b) => a - b);
+}
 
 return {
 	'luci.technitium': {
@@ -23,7 +54,7 @@ return {
 					port_conflict: !running && system("test ! -s /etc/technitium/data/dns.config && netstat -ln 2>/dev/null | awk '$1 ~ /^(tcp|udp)/ && $4 ~ /:53$/ { found=1 } END { exit !found }'") === 0,
 					enabled: system(service + ' enabled >/dev/null 2>&1') === 0,
 					console_port: 5380,
-					dns_port: 53
+					dns_ports: dns_ports(instances)
 				};
 			}
 		},

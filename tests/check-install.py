@@ -5,7 +5,6 @@
 import gzip
 import hashlib
 from pathlib import Path
-import re
 import shutil
 import socket
 import subprocess
@@ -134,6 +133,7 @@ cp /etc/config/firewall /tmp/firewall.before
 """)
     guest.run(OFFLINE + " add /tmp/technitium-test/*.apk\n")
     guest.run("""
+/etc/init.d/rpcd restart
 until curl -fsS http://127.0.0.1:5380/ >/dev/null; do sleep 2; done
 /etc/init.d/technitium running
 /etc/init.d/technitium enabled
@@ -147,13 +147,26 @@ ubus call luci.technitium status | jsonfilter -e '@.running' | grep -qx true
 """)
     print("Running legacy installation upgraded with DNS data, password and networking preserved.", flush=True)
 
+    guest.run(AUTH + """
+curl -fsS -G -H "Authorization: Bearer $token" http://127.0.0.1:5380/api/settings/set \
+    --data-urlencode dnsServerLocalEndPoints=0.0.0.0:1053 |
+    jsonfilter -e '@.status' | grep -qx ok
+until ubus call luci.technitium status | jsonfilter -e '@.dns_ports[*]' | grep -qx 1053; do sleep 1; done
+curl -fsS -G -H "Authorization: Bearer $token" http://127.0.0.1:5380/api/settings/set \
+    --data-urlencode dnsServerLocalEndPoints=0.0.0.0:53 |
+    jsonfilter -e '@.status' | grep -qx ok
+until ubus call luci.technitium status | jsonfilter -e '@.dns_ports[*]' | grep -qx 53; do sleep 1; done
+sha256sum /etc/technitium/data/auth.config > /tmp/auth.before
+""")
+    print("LuCI reports the actual DNS listener after changing 53 to 1053 and back.", flush=True)
+
     for running, enabled in [(False, False), (False, True), (True, False), (True, True)]:
         guest.run(
             "/etc/init.d/technitium " + ("start" if running else "stop") + "\n"
             "/etc/init.d/technitium " + ("enable" if enabled else "disable") + "\n"
         )
         guest.run(
-            OFFLINE + " --repository /tmp/technitium-test fix --reinstall technitium\n",
+            OFFLINE + " --repository /tmp/technitium-test/packages.adb fix --reinstall technitium\n",
             timeout=120,
         )
         guest.run(

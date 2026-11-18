@@ -22,6 +22,9 @@ msgstr "开机启动"
 msgid "DNS port"
 msgstr "DNS 端口"
 
+msgid "Not listening"
+msgstr "未监听"
+
 msgid "Open Technitium Console"
 msgstr "打开 Technitium 控制台"
 

@@ -27,9 +27,9 @@ jobs:
       - name: Prepare the OpenWrt 25.12.6 SDK
         run: |
           sudo apt-get update -q
-          sudo apt-get install -qy qemu-system-x86 ovmf dnsutils build-essential flex bison gawk gettext libncurses-dev libssl-dev python3-setuptools rsync unzip zstd
+          sudo apt-get install -qy --no-install-recommends qemu-system-x86 ovmf dnsutils build-essential flex bison gawk gettext libncurses-dev libssl-dev python3-setuptools rsync unzip zstd
           archive=openwrt-sdk-25.12.6-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst
-          curl -fLsS --retry 3 "https://downloads.openwrt.org/releases/25.12.6/targets/x86/64/$archive" -o "$RUNNER_TEMP/$archive"
+          curl -fLsS --retry 3 --connect-timeout 15 --max-time 600 "https://downloads.openwrt.org/releases/25.12.6/targets/x86/64/$archive" -o "$RUNNER_TEMP/$archive"
           printf '%s  %s\n' 1864152619092e781fa36a401960c8e9ae42d6a364c44ee5f0b197ca5f3c0fcc "$RUNNER_TEMP/$archive" | sha256sum -c -
           mkdir -p "$RUNNER_TEMP/sdk"
           tar --zstd -xf "$RUNNER_TEMP/$archive" --strip-components=1 -C "$RUNNER_TEMP/sdk"

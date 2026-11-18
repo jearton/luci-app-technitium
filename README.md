@@ -34,7 +34,7 @@ apk --no-network --repositories-file /dev/null --allow-untrusted add /tmp/techni
 apk --no-network --repositories-file /dev/null list -I technitium luci-app-technitium
 ```
 
-依赖包包括 `libstdcpp6`、`libgcc1`、`libopenssl3`、`libatomic1`、`zlib`、`ca-bundle` 和 `rpcd-mod-ucode`，同时需要已安装 LuCI。`--allow-untrusted` 用于本次安装已校验的独立 APK。[OpenWrt APK 文档](https://openwrt.org/docs/guide-user/additional-software/apk)
+依赖包包括 `libstdcpp6`、`libgcc1`、`libopenssl3`、`libatomic1`、`zlib`、`ca-bundle` 、`rpcd-mod-ucode` 和 `ucode-mod-fs`，同时需要已安装 LuCI。`--allow-untrusted` 用于本次安装已校验的独立 APK。[OpenWrt APK 文档](https://openwrt.org/docs/guide-user/additional-software/apk)
 
 **首次独立安装后，Technitium 默认停止，开机启动默认关闭。** 进入「服务 → Technitium DNS」启动服务，并按需开启开机启动。首次启动前，请配置现有 DNS 服务，释放 53 端口。首次启动会检查 DNS 端口占用。
 
@@ -44,7 +44,7 @@ apk --no-network --repositories-file /dev/null list -I technitium luci-app-techn
 
 ## 首次登录控制台
 
-进入「服务 → Technitium DNS」，确认服务已运行，点击「打开 Technitium 控制台」。当前入口使用与 LuCI 相同的主机地址和 HTTP 端口 `5380`，初始 DNS 端口为 `53`。在控制台修改端口后，需要同步调整当前 LuCI 集成的入口。
+进入「服务 → Technitium DNS」，确认服务已运行，点击「打开 Technitium 控制台」。当前入口使用与 LuCI 相同的主机地址和 HTTP 端口 `5380`，初始 DNS 端口为 `53`。DNS 端口可在 Technitium Console 修改，LuCI 从服务进程的实际 TCP/UDP 监听端口读取并展示，停止时显示「未监听」。控制台自身的 HTTP 端口修改后，需要同步调整当前 LuCI 集成的入口。
 
 用户名是 `admin`。通过路由器的 LuCI 终端或 SSH 管理连接查看首次启动时随机生成的密码。
 

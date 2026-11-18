@@ -34,7 +34,7 @@ apk --no-network --repositories-file /dev/null --allow-untrusted add /tmp/techni
 apk --no-network --repositories-file /dev/null list -I technitium luci-app-technitium
 ```
 
-The required system packages are `libstdcpp6`, `libgcc1`, `libopenssl3`, `libatomic1`, `zlib`, `ca-bundle` and `rpcd-mod-ucode`. LuCI must already be installed. Standalone APKs use `--allow-untrusted` for that invocation. [OpenWrt APK documentation](https://openwrt.org/docs/guide-user/additional-software/apk)
+The required system packages are `libstdcpp6`, `libgcc1`, `libopenssl3`, `libatomic1`, `zlib`, `ca-bundle` , `rpcd-mod-ucode` and `ucode-mod-fs`. LuCI must already be installed. Standalone APKs use `--allow-untrusted` for that invocation. [OpenWrt APK documentation](https://openwrt.org/docs/guide-user/additional-software/apk)
 
 A **fresh installation leaves Technitium stopped and disabled on boot**. Open **Services → Technitium DNS** to start it and choose whether to enable it on boot. Before first startup, configure the existing DNS resolver so port 53 is available. The initial startup checks for an existing DNS listener.
 
@@ -44,7 +44,7 @@ The generic packages leave DHCP, firewall, OpenClash, other DNS services and loc
 
 ## First console login
 
-Open **Services → Technitium DNS**, confirm the service is running and select **Open Technitium Console**. The current console entry uses HTTP port `5380` at the same hostname as LuCI. The initial DNS port is `53`. Port changes in the console require updating the current LuCI integration.
+Open **Services → Technitium DNS**, confirm the service is running and select **Open Technitium Console**. The current console entry uses HTTP port `5380` at the same hostname as LuCI. The initial DNS port is `53`. Change the DNS listener port in Technitium Console. LuCI reads the service process's actual TCP/UDP listeners and shows “Not listening” while stopped. Changing the console HTTP port requires updating the current LuCI console entry.
 
 The username is `admin`. Read the randomly generated initial password on the router through the LuCI terminal or your SSH management connection.
 
