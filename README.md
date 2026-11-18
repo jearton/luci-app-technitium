@@ -17,11 +17,11 @@ scp -O luci-app-technitium-1.0.2-r1.apk root@192.168.1.1:/tmp/
 ssh root@192.168.1.1
 ```
 
-Run the following commands on the router. The first command permits the standalone APK for this installation. [OpenWrt APK documentation](https://openwrt.org/docs/guide-user/additional-software/apk)
+Run the following commands on the router. If the router already has the native `technitium` and `rpcd-mod-ucode` packages, this update works offline. The install command skips repository configuration for this invocation and permits the verified standalone APK. [APK options](https://github.com/alpinelinux/apk-tools/blob/v3.0.5/doc/apk.8.scd)
 
 ```sh
-apk add --allow-untrusted /tmp/luci-app-technitium-1.0.2-r1.apk
-apk list -I luci-app-technitium
+apk --no-network --repositories-file /dev/null --allow-untrusted add /tmp/luci-app-technitium-1.0.2-r1.apk
+apk --no-network --repositories-file /dev/null list -I luci-app-technitium
 ```
 
 Refresh **Services → Technitium DNS** in LuCI. The router can stay running during the update.
