@@ -69,16 +69,19 @@ return view.extend({
 			[_('DNS port'), String(state.dns_port)]
 		];
 
-		return E('div', [
+		const content = E('div', [
 			E('h2', _('Technitium DNS')),
 			E('div', { class: 'table' }, rows.map(([label, value]) =>
 				E('div', { class: 'tr' }, [
 					E('div', { class: 'td' }, label),
 					E('div', { class: 'td' }, value)
 				]))),
-			controls,
-			state.running ? null : E('p', {}, _('Start the service to open its console.'))
+			controls
 		]);
+		if (!state.running)
+			content.append(E('p', {}, _('Start the service to open its console.')));
+
+		return content;
 	},
 
 	handleSaveApply: null,
