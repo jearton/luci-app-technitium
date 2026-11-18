@@ -6,15 +6,37 @@ This app expects the `technitium` OpenWrt package from [openwrt-pro](https://git
 
 LuCI's RPC ACL separates status and service control. The Technitium console has its own login. LuCI does not store its credentials.
 
-## Screenshots
+## Update an existing installation
 
-Captured from the x86/64 OpenWrt lab, using Argon and Technitium Console 1.4.2.
+On a router that already has the native `technitium` package, update the LuCI plugin with the `luci-app-technitium-*.apk` file from [Releases](https://github.com/jearton/luci-app-technitium/releases). Verify the download against the accompanying `SHA256SUMS`. The existing Chinese translation package can be kept for the v1.0.2 layout fix.
+
+Copy the verified APK from your computer. This example uses the default LAN address and the v1.0.2 filename.
+
+```sh
+scp -O luci-app-technitium-1.0.2-r1.apk root@192.168.1.1:/tmp/
+ssh root@192.168.1.1
+```
+
+Run the following commands on the router. The first command permits the standalone APK for this installation. [OpenWrt APK documentation](https://openwrt.org/docs/guide-user/additional-software/apk)
+
+```sh
+apk add --allow-untrusted /tmp/luci-app-technitium-1.0.2-r1.apk
+apk list -I luci-app-technitium
+```
+
+Refresh **Services → Technitium DNS** in LuCI. The router can stay running during the update.
+
+## Screenshots
 
 **Services → Technitium DNS**
 
-![LuCI Technitium service status and controls](docs/luci-technitium.png)
+LuCI v1.0.2 rendered in Chrome with the Argon theme and example service status.
+
+![Technitium DNS LuCI page with a compact console button on the left](docs/luci-technitium.png)
 
 **Technitium Console → Zones**
+
+Captured from Technitium Console 1.4.2 in the x86/64 OpenWrt lab.
 
 ![Technitium Console with the lab DNS zones](docs/technitium-console.png)
 
