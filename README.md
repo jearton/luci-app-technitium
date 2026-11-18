@@ -44,7 +44,7 @@ apk --no-network --repositories-file /dev/null list -I technitium luci-app-techn
 
 ## 首次登录控制台
 
-进入「服务 → Technitium DNS」，确认服务已运行，点击「打开 Technitium 控制台」。当前入口使用与 LuCI 相同的主机地址和 HTTP 端口 `5380`，初始 DNS 端口为 `53`。DNS 端口可在 Technitium Console 修改，LuCI 从服务进程的实际 TCP/UDP 监听端口读取并展示，停止时显示「未监听」。控制台自身的 HTTP 端口修改后，需要同步调整当前 LuCI 集成的入口。
+进入「服务 → Technitium DNS」，确认服务已运行，点击「打开 Technitium 控制台」。当前入口使用与 LuCI 相同的主机地址和 HTTP 端口 `5380`，初始 DNS 端口为 `53`。DNS 端口可在 Technitium Console 修改，LuCI 展示该进程在同一端口同时监听 TCP 和 UDP 的端口列表，停止时显示「未监听」。控制台自身的 HTTP 端口修改后，需要同步调整当前 LuCI 集成的入口。
 
 用户名是 `admin`。通过路由器的 LuCI 终端或 SSH 管理连接查看首次启动时随机生成的密码。
 

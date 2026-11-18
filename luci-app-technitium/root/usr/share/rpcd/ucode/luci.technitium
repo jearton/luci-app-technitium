@@ -8,8 +8,8 @@ const service = '/etc/init.d/technitium';
 const actions = ['start', 'stop', 'restart', 'enable', 'disable'];
 
 // Match the service's TCP/UDP listener pairs by socket inode to report its
-// active DNS ports.
-function dns_ports(instances) {
+// active listener ports.
+function listener_ports(instances) {
 	const sockets = {};
 	for (let name in instances) {
 		const pid = int(instances[name].pid);
@@ -17,7 +17,7 @@ function dns_ports(instances) {
 			continue;
 		const directory = '/proc/' + pid + '/fd/';
 		for (let fd in lsdir(directory) || []) {
-			const socket = match(readlink(directory + fd), /^socket:\[(\d+)\]$/);
+			const socket = match(readlink(directory + fd), /^socket:\[([0-9]+)\]$/);
 			if (socket)
 				sockets[socket[1]] = true;
 		}
@@ -26,7 +26,7 @@ function dns_ports(instances) {
 	const udp = {};
 	for (let protocol in ['tcp', 'tcp6', 'udp', 'udp6']) {
 		for (let line in split(readfile('/proc/net/' + protocol) || '', '\n')) {
-			const fields = split(trim(line), /\s+/);
+			const fields = split(trim(line), /[[:space:]]+/);
 			if (!sockets[fields[9]])
 				continue;
 			const port = int(split(fields[1], ':')[1], 16);
@@ -56,7 +56,7 @@ return {
 					port_conflict: !running && system("test ! -s /etc/technitium/data/dns.config && netstat -ln 2>/dev/null | awk '$1 ~ /^(tcp|udp)/ && $4 ~ /:53$/ { found=1 } END { exit !found }'") === 0,
 					enabled: system(service + ' enabled >/dev/null 2>&1') === 0,
 					console_port: 5380,
-					dns_ports: dns_ports(instances)
+					listener_ports: listener_ports(instances)
 				};
 			}
 		},

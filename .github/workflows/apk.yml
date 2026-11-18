@@ -49,7 +49,7 @@ jobs:
           grep -Fx '# CONFIG_ALL is not set' .config
           grep -Fx '# CONFIG_ALL_KMODS is not set' .config
           make -j"$(nproc)" package/technitium/compile package/luci-app-technitium/compile V=s
-          find bin/packages -type f \( -name 'technitium-*.apk' -o -name 'luci-app-technitium-*.apk' -o -name 'luci-i18n-technitium-zh-cn-*.apk' \) \
+          find bin -type f \( -name 'technitium-*.apk' -o -name 'luci-app-technitium-*.apk' -o -name 'luci-i18n-technitium-zh-cn-*.apk' \) \
             -exec cp {} "$RUNNER_TEMP/apks/" \;
           cd "$RUNNER_TEMP/apks"
           test "$(find . -name '*.apk' | wc -l)" -eq 3
@@ -59,7 +59,12 @@ jobs:
           "$sdk/staging_dir/host/bin/apk" mkndx --allow-untrusted --output packages.adb ./*.apk
           sha256sum ./*.apk packages.adb > SHA256SUMS
       - name: Verify installation and upgrade in an isolated x86 VM
-        run: python3 tests/check-install.py "$RUNNER_TEMP/apks"
+        run: |
+          if test -c /dev/kvm; then
+            sudo chown "$(id -u)" /dev/kvm
+            test -r /dev/kvm && test -w /dev/kvm
+          fi
+          python3 tests/check-install.py "$RUNNER_TEMP/apks"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: openwrt-25.12-luci-app-technitium

@@ -142,6 +142,7 @@ cmp /etc/config/firewall /tmp/firewall.before
 nslookup node.package-ci.test 127.0.0.1 | grep -F 192.0.2.42
 test -f /usr/lib/technitium/console/index.html
 test -f /usr/lib/technitium/server/DnsServerApp.dll
+curl -fsS http://127.0.0.1:5380/ | grep -F 'id="root"'
 ubus call luci.technitium status | jsonfilter -e '@.running' | grep -qx true
 """)
     guest.run(AUTH)
@@ -151,11 +152,11 @@ ubus call luci.technitium status | jsonfilter -e '@.running' | grep -qx true
 curl -fsS -G -H "Authorization: Bearer $token" http://127.0.0.1:5380/api/settings/set \
     --data-urlencode dnsServerLocalEndPoints=0.0.0.0:1053 |
     jsonfilter -e '@.status' | grep -qx ok
-until ubus call luci.technitium status | jsonfilter -e '@.dns_ports[*]' | grep -qx 1053; do sleep 1; done
+until ubus call luci.technitium status | jsonfilter -e '@.listener_ports[*]' | grep -qx 1053; do sleep 1; done
 curl -fsS -G -H "Authorization: Bearer $token" http://127.0.0.1:5380/api/settings/set \
     --data-urlencode dnsServerLocalEndPoints=0.0.0.0:53 |
     jsonfilter -e '@.status' | grep -qx ok
-until ubus call luci.technitium status | jsonfilter -e '@.dns_ports[*]' | grep -qx 53; do sleep 1; done
+until ubus call luci.technitium status | jsonfilter -e '@.listener_ports[*]' | grep -qx 53; do sleep 1; done
 cp /etc/technitium/setup-password /tmp/password.before
 """)
     print("LuCI reports the actual DNS listener after changing 53 to 1053 and back.", flush=True)
@@ -194,10 +195,12 @@ cp /etc/technitium/setup-password /tmp/password.before
 test -f /etc/technitium/data/auth.config
 """)
     print("Disabled service remains disabled after reboot.", flush=True)
+    guest.run("mkdir -p /tmp/technitium-test\n")
+    guest.upload(sorted(apks.glob("*.apk")) + [apks / "packages.adb"])
 
     # Mark dependencies explicitly installed before removing the old application.
     # This keeps the VM's libraries available for the subsequent offline install.
-    guest.run(OFFLINE + " add libstdcpp6 libgcc1 libopenssl3 libatomic1 zlib ca-bundle rpcd-mod-ucode\n")
+    guest.run(OFFLINE + " add libstdcpp6 libgcc1 libopenssl3 libatomic1 zlib ca-bundle rpcd-mod-ucode ucode-mod-fs\n")
     guest.run(OFFLINE + " del luci-app-technitium luci-i18n-technitium-zh-cn technitium\n")
     guest.run("""
 # Retain the old dataset as a rollback point while testing a first installation.
@@ -230,6 +233,7 @@ until curl -fsS http://127.0.0.1:5380/ >/dev/null; do sleep 2; done
 /etc/init.d/technitium running
 ! /etc/init.d/technitium enabled
 test "$(wc -c < /etc/technitium/setup-password)" -eq 48
+curl -fsS http://127.0.0.1:5380/ | grep -F 'id="root"'
 """)
     guest.run(AUTH + """
 curl -fsS -G -H "Authorization: Bearer $token" http://127.0.0.1:5380/api/zones/list |
@@ -243,6 +247,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="technitium-apk-vm-") as temporary:
         directory = Path(temporary)
         archive = directory / "base.img.gz"
+        print("Downloading the checksum-pinned regression image.", flush=True)
         urllib.request.urlretrieve(BASE_URL, archive)
         assert hashlib.sha256(archive.read_bytes()).hexdigest() == BASE_SHA256
         with gzip.open(archive, "rb") as source, (directory / "disk.img").open("wb") as target:
@@ -264,9 +269,11 @@ def main():
         ]
         process = subprocess.Popen(command)
         try:
+            print("Booting the isolated IPv4-only VM.", flush=True)
             bootstrap(directory / "serial.sock", public_key)
             guest = Guest(directory, key)
             await_ssh(guest)
+            print("The test SSH endpoint is ready.", flush=True)
             tests(guest, apks)
         finally:
             process.terminate()

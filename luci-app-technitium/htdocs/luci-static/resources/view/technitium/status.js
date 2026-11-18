@@ -66,7 +66,7 @@ return view.extend({
 		const rows = [
 			[_('Service'), state.running ? _('Running') : _('Stopped')],
 			[_('Start on boot'), state.enabled ? _('Enabled') : _('Disabled')],
-			[_('DNS port'), state.dns_ports?.length ? state.dns_ports.join(', ') : _('Not listening')]
+			[_('TCP/UDP listening ports'), state.listener_ports?.length ? state.listener_ports.join(', ') : _('Not listening')]
 		];
 
 		const content = E('div', [

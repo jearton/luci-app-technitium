@@ -44,7 +44,7 @@ The generic packages leave DHCP, firewall, OpenClash, other DNS services and loc
 
 ## First console login
 
-Open **Services → Technitium DNS**, confirm the service is running and select **Open Technitium Console**. The current console entry uses HTTP port `5380` at the same hostname as LuCI. The initial DNS port is `53`. Change the DNS listener port in Technitium Console. LuCI reads the service process's actual TCP/UDP listeners and shows “Not listening” while stopped. Changing the console HTTP port requires updating the current LuCI console entry.
+Open **Services → Technitium DNS**, confirm the service is running and select **Open Technitium Console**. The current console entry uses HTTP port `5380` at the same hostname as LuCI. The initial DNS port is `53`. Change the DNS listener port in Technitium Console. LuCI lists ports where the service process listens on both TCP and UDP and shows “Not listening” while stopped. Changing the console HTTP port requires updating the current LuCI console entry.
 
 The username is `admin`. Read the randomly generated initial password on the router through the LuCI terminal or your SSH management connection.
 
